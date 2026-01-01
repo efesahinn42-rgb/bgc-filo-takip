@@ -1,9 +1,8 @@
-// app/dashboard/log-actions.ts
 "use server";
 
-import { prisma } from "@/lib/prisma"; // DÜZELTME: Ortak bağlantıyı kullanıyoruz
+import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { uploadImage } from "@/lib/upload-helper";
+import { put } from "@vercel/blob"; // Vercel Blob paketini ekledik
 
 export async function createLogAction(prevState: any, formData: FormData) {
   // 1. Form verilerini al
@@ -17,7 +16,6 @@ export async function createLogAction(prevState: any, formData: FormData) {
     return { error: "Lütfen araç seçin ve KM girin." };
   }
 
-  // KM'yi sayıya çevir
   const kmValue = parseInt(km);
   if (isNaN(kmValue) || kmValue < 0) {
     return { error: "Geçerli bir kilometre değeri giriniz." };
@@ -36,18 +34,27 @@ export async function createLogAction(prevState: any, formData: FormData) {
       };
     }
 
-    // 4. Fotoğraf Yükleme İşlemi (Varsa)
+    // 4. Fotoğraf Yükleme İşlemi (Vercel Blob)
     let photoUrl = null;
+
+    // Eğer bir dosya seçildiyse ve boyutu 0'dan büyükse
     if (photoFile && photoFile.size > 0 && photoFile.name !== "undefined") {
-      // uploadImage fonksiyonu lib/upload-helper.ts dosyasından gelir
-      photoUrl = await uploadImage(photoFile);
+      // Benzersiz bir dosya adı oluşturuyoruz
+      const fileName = `km-log-${vehicleId}-${Date.now()}-${photoFile.name}`;
+
+      // Vercel Blob'a yükleme yapıyoruz
+      const blob = await put(fileName, photoFile, {
+        access: "public",
+      });
+
+      photoUrl = blob.url; // Artık veritabanına "https://..." şeklinde internet linki kaydolacak
     }
 
     // 5. Veritabanına Kayıt
     await prisma.log.create({
       data: {
         vehicleId: vehicleId,
-        userId: userId, // Formdan gelen userId (hidden input)
+        userId: userId,
         km: kmValue,
         photoUrl: photoUrl,
       },
@@ -55,6 +62,8 @@ export async function createLogAction(prevState: any, formData: FormData) {
 
     // 6. Başarılı Dönüş
     revalidatePath("/dashboard");
+    revalidatePath("/dashboard/reports"); // Raporlar sayfasını da yenilemesini söyledik
+
     return { success: "Kayıt ve fotoğraf başarıyla eklendi! ✅" };
   } catch (error) {
     console.error("LOG ERROR:", error);
