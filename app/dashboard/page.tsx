@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/auth";
 import Link from "next/link";
-import UserView from "./user-view"; // Az önce oluşturduğumuz bileşen
+import UserView from "./user-view";
 
 // İstatistikleri çeken fonksiyon (SADECE ADMİN İÇİN)
 async function getAdminStats() {
@@ -21,52 +21,52 @@ async function getAdminStats() {
 
 // Kullanıcı verilerini çeken fonksiyon (SADECE NORMAL USER İÇİN)
 async function getUserData(userId: string) {
-  // Kullanıcının bağlı olduğu şirketi ve o şirketin araçlarını bul
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
       company: {
         include: {
-          vehicles: true, // Şirketin araçlarını çek
+          vehicles: true,
         },
       },
     },
   });
 
   return {
-    vehicles: user?.company?.vehicles || [], // Araç yoksa boş dizi döndür
+    vehicles: user?.company?.vehicles || [],
     userId: userId,
   };
 }
 
 export default async function DashboardPage() {
-  // 1. Oturum Kontrolü ve Rolü Al
-  const session = await verifySession(); // { isAuth: true, userId: '...', role: '...' }
+  const session = await verifySession();
 
-  // ==========================================
   // SENARYO 1: KULLANICI NORMAL BİR USER İSE
-  // ==========================================
   if (session.role !== "ADMIN") {
     const userData = await getUserData(session.userId);
     return <UserView vehicles={userData.vehicles} userId={session.userId} />;
   }
 
-  // ==========================================
-  // SENARYO 2: KULLANICI ADMİN İSE (Aşağıdaki İstatistik Ekranı)
-  // ==========================================
+  // SENARYO 2: KULLANICI ADMİN İSE
   const stats = await getAdminStats();
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-4 md:p-6 space-y-6 md:space-y-8">
       {/* BAŞLIK */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Genel Bakış</h1>
-          <p className="text-gray-400 mt-1">Admin paneline hoş geldiniz.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
+            Genel Bakış
+          </h1>
+          <p className="text-gray-400 mt-1 text-sm md:text-base">
+            Admin paneline hoş geldiniz.
+          </p>
         </div>
-        <div className="text-right hidden sm:block">
-          <p className="text-sm text-gray-500">Bugün</p>
-          <p className="text-white font-medium">
+        <div className="text-left sm:text-right">
+          <p className="text-xs text-gray-500 uppercase tracking-wider">
+            Bugün
+          </p>
+          <p className="text-white font-medium text-sm md:text-base">
             {new Date().toLocaleDateString("tr-TR", {
               weekday: "long",
               year: "numeric",
@@ -77,18 +77,17 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* İSTATİSTİK KARTLARI */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* İSTATİSTİK KARTLARI - MOBİL UYUMLU (grid-cols-1) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {/* KART 1: ŞİRKETLER */}
         <Link href="/dashboard/companies" className="block group">
-          <div className="bg-[#111] p-6 rounded-xl border border-[#222] hover:border-red-900/30 transition-all cursor-pointer h-full relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="bg-[#111] p-5 md:p-6 rounded-xl border border-[#222] hover:border-red-900/30 transition-all h-full relative overflow-hidden">
             <div className="flex justify-between items-start relative z-10">
               <div>
-                <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">
+                <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">
                   Kayıtlı Müşteri
                 </p>
-                <h3 className="text-4xl font-bold text-white mt-2 group-hover:text-red-500 transition-colors">
+                <h3 className="text-3xl md:text-4xl font-bold text-white mt-2 group-hover:text-red-500 transition-colors">
                   {stats.totalCompanies}
                 </h3>
               </div>
@@ -118,11 +117,11 @@ export default async function DashboardPage() {
                 </svg>
               </div>
             </div>
-            <div className="mt-4 flex items-center text-sm text-gray-500 group-hover:text-red-400 transition-colors relative z-10">
+            <div className="mt-4 flex items-center text-xs text-gray-500 group-hover:text-red-400 transition-colors">
               <span>Tüm şirketleri görüntüle</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 ml-1 transform group-hover:translate-x-1 transition-transform"
+                className="h-3 w-3 ml-1"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -140,14 +139,13 @@ export default async function DashboardPage() {
 
         {/* KART 2: ARAÇLAR */}
         <Link href="/dashboard/vehicles" className="block group">
-          <div className="bg-[#111] p-6 rounded-xl border border-[#222] hover:border-blue-900/30 transition-all cursor-pointer h-full relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="bg-[#111] p-5 md:p-6 rounded-xl border border-[#222] hover:border-blue-900/30 transition-all h-full relative overflow-hidden">
             <div className="flex justify-between items-start relative z-10">
               <div>
-                <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">
+                <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">
                   Toplam Araç
                 </p>
-                <h3 className="text-4xl font-bold text-white mt-2 group-hover:text-blue-500 transition-colors">
+                <h3 className="text-3xl md:text-4xl font-bold text-white mt-2 group-hover:text-blue-500 transition-colors">
                   {stats.totalVehicles}
                 </h3>
               </div>
@@ -169,11 +167,11 @@ export default async function DashboardPage() {
                 </svg>
               </div>
             </div>
-            <div className="mt-4 flex items-center text-sm text-gray-500 group-hover:text-blue-400 transition-colors relative z-10">
+            <div className="mt-4 flex items-center text-xs text-gray-500 group-hover:text-blue-400 transition-colors">
               <span>Araç listesine git</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 ml-1 transform group-hover:translate-x-1 transition-transform"
+                className="h-3 w-3 ml-1"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -190,115 +188,109 @@ export default async function DashboardPage() {
         </Link>
 
         {/* KART 3: KULLANICILAR */}
-        <div className="block group">
-          <div className="bg-[#111] p-6 rounded-xl border border-[#222] hover:border-green-900/30 transition-all h-full relative overflow-hidden">
-            <div className="flex justify-between items-start relative z-10">
-              <div>
-                <p className="text-gray-500 text-sm font-medium uppercase tracking-wider">
-                  Kullanıcı & Şoför
-                </p>
-                <h3 className="text-4xl font-bold text-white mt-2 group-hover:text-green-500 transition-colors">
-                  {stats.totalUsers}
-                </h3>
-              </div>
-              <div className="p-3 bg-green-900/10 rounded-lg text-green-500 group-hover:scale-110 transition-transform">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              </div>
+        <div className="bg-[#111] p-5 md:p-6 rounded-xl border border-[#222] hover:border-green-900/30 transition-all h-full relative overflow-hidden">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+                Kullanıcı & Şoför
+              </p>
+              <h3 className="text-3xl md:text-4xl font-bold text-white mt-2 group-hover:text-green-500 transition-colors">
+                {stats.totalUsers}
+              </h3>
             </div>
-            <p className="text-sm text-gray-500 mt-4 relative z-10">
-              Sisteme erişimi olan personel sayısı.
-            </p>
+            <div className="p-3 bg-green-900/10 rounded-lg text-green-500 group-hover:scale-110 transition-transform">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
           </div>
+          <p className="text-xs text-gray-500 mt-4">
+            Sisteme erişimi olan personel sayısı.
+          </p>
         </div>
       </div>
 
-      {/* SON HAREKETLER TABLOSU */}
-      <div className="bg-[#111] rounded-xl border border-[#222] overflow-hidden">
-        <div className="p-6 border-b border-[#222] flex justify-between items-center">
-          <h2 className="text-xl font-bold text-white">
+      {/* SON HAREKETLER TABLOSU - MOBİL UYUMLU KAYDIRMA (overflow-x-auto) */}
+      <div className="bg-[#111] rounded-xl border border-[#222] overflow-hidden shadow-2xl">
+        <div className="p-5 border-b border-[#222] flex justify-between items-center">
+          <h2 className="text-lg md:text-xl font-bold text-white">
             Son Girilen KM Kayıtları
           </h2>
-          <span className="text-xs bg-[#222] text-gray-400 px-2 py-1 rounded">
+          <span className="text-[10px] bg-[#222] text-gray-400 px-2 py-1 rounded font-bold uppercase tracking-tighter">
             Son 5 Hareket
           </span>
         </div>
-        <table className="w-full text-left">
-          <thead className="bg-[#1a1a1a] text-xs uppercase text-gray-500">
-            <tr>
-              <th className="px-6 py-4">Araç Plakası</th>
-              <th className="px-6 py-4">Sürücü / Gönderen</th>
-              <th className="px-6 py-4">KM Değeri</th>
-              <th className="px-6 py-4">Tarih</th>
-              <th className="px-6 py-4 text-right">Fotoğraf</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#222]">
-            {stats.recentLogs.map((log) => (
-              <tr
-                key={log.id}
-                className="hover:bg-[#1a1a1a] transition-colors group"
-              >
-                <td className="px-6 py-4">
-                  <div className="font-bold text-white bg-zinc-800 px-2 py-1 rounded inline-block border border-zinc-700">
-                    {log.vehicle.plate}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-gray-300">
-                  {log.user.fullName || log.user.username}
-                </td>
-                <td className="px-6 py-4 text-white font-mono">
-                  {log.km.toLocaleString("tr-TR")} km
-                </td>
-                <td className="px-6 py-4 text-gray-400 text-sm">
-                  {new Date(log.createdAt).toLocaleString("tr-TR", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  {log.photoUrl ? (
-                    <a
-                      href={log.photoUrl}
-                      target="_blank"
-                      className="text-blue-500 hover:text-blue-400 text-sm underline"
-                    >
-                      Görüntüle
-                    </a>
-                  ) : (
-                    <span className="text-gray-600 text-sm">-</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {stats.recentLogs.length === 0 && (
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[700px]">
+            {" "}
+            {/* min-w sayesinde mobilde sütunlar birbirine girmez */}
+            <thead className="bg-[#1a1a1a] text-[10px] md:text-xs uppercase text-gray-500 tracking-widest">
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-6 py-12 text-center text-gray-500"
-                >
-                  Kayıt bulunamadı.
-                </td>
+                <th className="px-6 py-4">Araç Plakası</th>
+                <th className="px-6 py-4">Sürücü / Gönderen</th>
+                <th className="px-6 py-4">KM Değeri</th>
+                <th className="px-6 py-4">Tarih</th>
+                <th className="px-6 py-4 text-right">Fotoğraf</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-[#222]">
+              {stats.recentLogs.map((log) => (
+                <tr
+                  key={log.id}
+                  className="hover:bg-[#1a1a1a] transition-colors group"
+                >
+                  <td className="px-6 py-4">
+                    <div className="font-bold text-white bg-zinc-800 px-2 py-1 rounded inline-block border border-zinc-700 text-sm">
+                      {log.vehicle.plate}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-300 text-sm">
+                    {log.user.fullName || log.user.username}
+                  </td>
+                  <td className="px-6 py-4 text-white font-mono text-sm">
+                    {log.km.toLocaleString("tr-TR")} km
+                  </td>
+                  <td className="px-6 py-4 text-gray-400 text-xs">
+                    {new Date(log.createdAt).toLocaleString("tr-TR", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    {log.photoUrl ? (
+                      <a
+                        href={log.photoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block bg-blue-900/20 text-blue-400 text-[10px] font-bold px-3 py-1.5 rounded border border-blue-900/30 hover:bg-blue-900/40 transition-all active:scale-95"
+                      >
+                        GÖRÜNTÜLE
+                      </a>
+                    ) : (
+                      <span className="text-gray-600 text-xs">Yok</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
