@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { deleteCompanyAction } from "@/app/dashboard/actions";
 
 export default function CompaniesPage() {
-  const [companies, setCompanies] = useState([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
