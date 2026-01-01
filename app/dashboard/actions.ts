@@ -1,3 +1,5 @@
+//app/dashboard/actions.ts
+
 "use server";
 
 import { prisma } from "@/lib/prisma"; // Ortak prisma client
