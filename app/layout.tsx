@@ -1,27 +1,33 @@
-import { verifySession } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import Sidebar from "./Sidebar"; // Az önce oluşturduğumuz bileşeni import ediyoruz
+// app/layout.tsx
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
-export default async function DashboardLayout({
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "BGC Filo Yönetim Sistemi",
+  description: "Kurumsal Araç Takip Paneli",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await verifySession();
-
-  if (!session) {
-    redirect("/login");
-  }
-
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-neutral-950 text-white">
-      {/* İstemci Tarafı Yönetilen Sidebar */}
-      <Sidebar session={session} />
-
-      {/* Ana İçerik */}
-      <main className="flex-1 pt-16 lg:pt-0 p-4 md:p-8 bg-black/50 overflow-y-auto">
-        <div className="max-w-7xl mx-auto">{children}</div>
-      </main>
-    </div>
+    <html lang="tr" className="dark">
+      <body
+        className={`${inter.className} bg-black text-white`}
+        suppressHydrationWarning
+      >
+        {children}
+      </body>
+    </html>
   );
 }
