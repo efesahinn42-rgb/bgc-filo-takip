@@ -60,7 +60,15 @@ export default async function VehiclesPage() {
                   </Link>
 
                   {/* SİLME FORMU */}
-                  <form action={deleteVehicleAction.bind(null, vehicle.id)}>
+                  <form
+                    action={async () => {
+                      if (
+                        confirm("Bu aracı silmek istediğinize emin misiniz?")
+                      ) {
+                        await deleteVehicleAction(vehicle.id);
+                      }
+                    }}
+                  >
                     <button
                       type="submit"
                       className="text-red-500 hover:text-red-400 transition-colors"
