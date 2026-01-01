@@ -3,6 +3,9 @@ import { verifySession } from "@/lib/auth";
 import Link from "next/link";
 import UserView from "./user-view";
 
+// Sayfanın her zaman güncel veriyi çekmesini sağlar (Vercel Cache'i önler)
+export const dynamic = "force-dynamic";
+
 // İstatistikleri çeken fonksiyon (SADECE ADMİN İÇİN)
 async function getAdminStats() {
   const [totalCompanies, totalVehicles, totalUsers, recentLogs] =
@@ -16,7 +19,19 @@ async function getAdminStats() {
         include: { vehicle: true, user: true },
       }),
     ]);
-  return { totalCompanies, totalVehicles, totalUsers, recentLogs };
+
+  // DÜZELTME: BigInt (km) değerlerini Number'a çeviriyoruz (JSON serileştirme hatasını önler)
+  const formattedLogs = recentLogs.map((log) => ({
+    ...log,
+    km: Number(log.km),
+  }));
+
+  return {
+    totalCompanies,
+    totalVehicles,
+    totalUsers,
+    recentLogs: formattedLogs,
+  };
 }
 
 // Kullanıcı verilerini çeken fonksiyon (SADECE NORMAL USER İÇİN)
@@ -68,6 +83,7 @@ export default async function DashboardPage() {
           </p>
           <p className="text-white font-medium text-sm md:text-base">
             {new Date().toLocaleDateString("tr-TR", {
+              timeZone: "Europe/Istanbul", // Sunucu nerede olursa olsun Türkiye saati
               weekday: "long",
               year: "numeric",
               month: "long",
@@ -77,7 +93,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* İSTATİSTİK KARTLARI - MOBİL UYUMLU (grid-cols-1) */}
+      {/* İSTATİSTİK KARTLARI */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {/* KART 1: ŞİRKETLER */}
         <Link href="/dashboard/companies" className="block group">
@@ -117,23 +133,6 @@ export default async function DashboardPage() {
                 </svg>
               </div>
             </div>
-            <div className="mt-4 flex items-center text-xs text-gray-500 group-hover:text-red-400 transition-colors">
-              <span>Tüm şirketleri görüntüle</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3 ml-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </div>
           </div>
         </Link>
 
@@ -167,29 +166,12 @@ export default async function DashboardPage() {
                 </svg>
               </div>
             </div>
-            <div className="mt-4 flex items-center text-xs text-gray-500 group-hover:text-blue-400 transition-colors">
-              <span>Araç listesine git</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3 ml-1"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </div>
           </div>
         </Link>
 
         {/* KART 3: KULLANICILAR */}
         <div className="bg-[#111] p-5 md:p-6 rounded-xl border border-[#222] hover:border-green-900/30 transition-all h-full relative overflow-hidden">
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start relative z-10">
             <div>
               <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">
                 Kullanıcı & Şoför
@@ -217,13 +199,10 @@ export default async function DashboardPage() {
               </svg>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-4">
-            Sisteme erişimi olan personel sayısı.
-          </p>
         </div>
       </div>
 
-      {/* SON HAREKETLER TABLOSU - MOBİL UYUMLU KAYDIRMA (overflow-x-auto) */}
+      {/* SON HAREKETLER TABLOSU */}
       <div className="bg-[#111] rounded-xl border border-[#222] overflow-hidden shadow-2xl">
         <div className="p-5 border-b border-[#222] flex justify-between items-center">
           <h2 className="text-lg md:text-xl font-bold text-white">
@@ -236,14 +215,12 @@ export default async function DashboardPage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left min-w-[700px]">
-            {" "}
-            {/* min-w sayesinde mobilde sütunlar birbirine girmez */}
             <thead className="bg-[#1a1a1a] text-[10px] md:text-xs uppercase text-gray-500 tracking-widest">
               <tr>
                 <th className="px-6 py-4">Araç Plakası</th>
                 <th className="px-6 py-4">Sürücü / Gönderen</th>
                 <th className="px-6 py-4">KM Değeri</th>
-                <th className="px-6 py-4">Tarih</th>
+                <th className="px-6 py-4">Tarih / Saat</th>
                 <th className="px-6 py-4 text-right">Fotoğraf</th>
               </tr>
             </thead>
@@ -265,12 +242,18 @@ export default async function DashboardPage() {
                     {log.km.toLocaleString("tr-TR")} km
                   </td>
                   <td className="px-6 py-4 text-gray-400 text-xs">
-                    {new Date(log.createdAt).toLocaleString("tr-TR", {
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    <div className="font-medium text-white">
+                      {new Date(log.createdAt).toLocaleDateString("tr-TR", {
+                        timeZone: "Europe/Istanbul",
+                      })}
+                    </div>
+                    <div className="text-[10px]">
+                      {new Date(log.createdAt).toLocaleTimeString("tr-TR", {
+                        timeZone: "Europe/Istanbul",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-right">
                     {log.photoUrl ? (

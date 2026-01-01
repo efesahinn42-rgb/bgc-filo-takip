@@ -3,71 +3,71 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"  
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Company {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
-  type      String   @default("CORPORATE")
+  type      String    @default("CORPORATE")
   tckn      String?
   taxNumber String?
   taxOffice String?
   logoUrl   String?
-  isActive  Boolean  @default(true)
+  isActive  Boolean   @default(true)
   phone     String?
   city      String?
 
   users     User[]
   vehicles  Vehicle[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
+  id        String    @id @default(cuid())
+  username  String    @unique
   password  String
   fullName  String?
-  role      String   @default("USER")
+  role      String    @default("USER")
 
   companyId String?
-  company   Company? @relation(fields: [companyId], references: [id])
+  company   Company?  @relation(fields: [companyId], references: [id])
 
   logs      Log[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Vehicle {
-  id        String   @id @default(cuid())
-  plate     String   @unique
+  id        String    @id @default(cuid())
+  plate     String    @unique
   model     String?
 
   companyId String
-  company   Company  @relation(fields: [companyId], references: [id])
+  company   Company   @relation(fields: [companyId], references: [id])
 
   logs      Log[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Log {
-  id          String   @id @default(cuid())
-  km          Int
+  id          String    @id @default(cuid())
+  km          BigInt
   photoUrl    String?
   driverName  String?
   processedBy String?
 
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
 
   vehicleId   String
-  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+  vehicle     Vehicle   @relation(fields: [vehicleId], references: [id])
 
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 }
