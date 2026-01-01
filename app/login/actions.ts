@@ -1,4 +1,3 @@
-// app/login/actions.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -14,25 +13,32 @@ export async function loginAction(prevState: any, formData: FormData) {
     return { error: "Lütfen tüm alanları doldurun." };
   }
 
+  let isSuccess = false;
+
   try {
     const user = await prisma.user.findUnique({
       where: { username: username },
     });
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    // Şifre kontrolü
+    if (!user || password !== user.password) {
       return { error: "Kullanıcı adı veya şifre hatalı!" };
     }
 
-    // DÜZELTME BURADA:
-    // createSession artık bir obje bekliyor ve ROLE bilgisini gönderiyoruz.
+    // Session oluşturma
     await createSession({
       userId: user.id,
-      role: user.role, // Admin ise menüler açılacak
+      role: user.role,
     });
+
+    isSuccess = true;
   } catch (error) {
     console.error("GİRİŞ HATASI:", error);
-    return { error: "Teknik bir hata oluştu." };
+    return { error: "Teknik bir hata oluştu veya bilgiler uyuşmuyor." };
   }
 
-  redirect("/dashboard");
+  // KRİTİK DÜZELTME: Redirect her zaman try/catch bloğunun DIŞINDA olmalıdır.
+  if (isSuccess) {
+    redirect("/dashboard");
+  }
 }

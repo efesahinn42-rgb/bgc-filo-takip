@@ -1,17 +1,11 @@
-// lib/auth.ts
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const secretKey = "gizli-anahtar-buraya-cok-gizli-olmali";
+// .env dosyasındaki anahtarı kullan, yoksa yedek bir anahtar ata
+const secretKey =
+  process.env.NEXTAUTH_SECRET || "bgc_filo_varsayilan_gizli_anahtar_2026";
 const key = new TextEncoder().encode(secretKey);
-
-// Payload tipini tanımlayalım
-type SessionPayload = {
-  userId: string;
-  role: string;
-  expires: Date;
-};
 
 export async function encrypt(payload: any) {
   return await new SignJWT(payload)
@@ -28,19 +22,18 @@ export async function decrypt(input: string): Promise<any> {
     });
     return payload;
   } catch (error) {
+    console.error("JWT Decrypt Hatası:", error);
     return null;
   }
 }
 
-// BURASI GÜNCELLENDİ: Artık role bilgisini de alıyor
 export async function createSession(payload: { userId: string; role: string }) {
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 saat
+  const session = await encrypt({ ...payload, expiresAt });
 
-  // Session içine rolü de şifreliyoruz
-  const session = await encrypt({ ...payload, expires });
-
-  (await cookies()).set("admin_session", session, {
-    expires,
+  const cookieStore = await cookies();
+  cookieStore.set("admin_session", session, {
+    expires: expiresAt,
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -49,16 +42,17 @@ export async function createSession(payload: { userId: string; role: string }) {
 }
 
 export async function getSession() {
-  const session = (await cookies()).get("admin_session")?.value;
+  const cookieStore = await cookies();
+  const session = cookieStore.get("admin_session")?.value;
   if (!session) return null;
   return await decrypt(session);
 }
 
 export async function deleteSession() {
-  (await cookies()).delete("admin_session");
+  const cookieStore = await cookies();
+  cookieStore.delete("admin_session");
 }
 
-// BURASI GÜNCELLENDİ: Rolü de döndürüyor
 export async function verifySession() {
   const session = await getSession();
 
@@ -69,6 +63,6 @@ export async function verifySession() {
   return {
     isAuth: true,
     userId: session.userId as string,
-    role: session.role as string, // Layout bu bilgiyi kullanarak menüyü açacak
+    role: session.role as string,
   };
 }
