@@ -1,9 +1,8 @@
-// app/dashboard/vehicles/page.tsx
 import Link from "next/link";
-import { PrismaClient } from "@prisma/client";
-import { deleteVehicleAction } from "./new/actions";
+import { prisma } from "@/lib/prisma"; // Merkezi prisma dosyasını kullanıyoruz
+import DeleteButton from "./DeleteButton"; // Yeni buton bileşeni
 
-const prisma = new PrismaClient();
+export const dynamic = "force-dynamic"; // Verilerin her zaman güncel kalmasını sağlar
 
 export default async function VehiclesPage() {
   const vehicles = await prisma.vehicle.findMany({
@@ -11,7 +10,7 @@ export default async function VehiclesPage() {
       company: true,
     },
     orderBy: {
-      id: "desc", // HATA DÜZELTİLDİ: 'createdAt' yerine 'id' kullanıldı
+      id: "desc",
     },
   });
 
@@ -51,7 +50,6 @@ export default async function VehiclesPage() {
                   {vehicle.company?.name || "Bilinmiyor"}
                 </td>
                 <td className="px-6 py-4 text-right flex justify-end gap-3 items-center">
-                  {/* DÜZENLEME LİNKİ */}
                   <Link
                     href={`/dashboard/vehicles/${vehicle.id}`}
                     className="text-yellow-500 hover:text-yellow-400 transition-colors"
@@ -59,23 +57,8 @@ export default async function VehiclesPage() {
                     Düzenle
                   </Link>
 
-                  {/* SİLME FORMU */}
-                  <form
-                    action={async () => {
-                      if (
-                        confirm("Bu aracı silmek istediğinize emin misiniz?")
-                      ) {
-                        await deleteVehicleAction(vehicle.id);
-                      }
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      className="text-red-500 hover:text-red-400 transition-colors"
-                    >
-                      Sil
-                    </button>
-                  </form>
+                  {/* Silme işlemini yapan Client Component */}
+                  <DeleteButton vehicleId={vehicle.id} />
                 </td>
               </tr>
             ))}
