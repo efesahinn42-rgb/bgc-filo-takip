@@ -17,10 +17,13 @@ export default function LogEntryForm({
   vehicles: VehicleProp[];
   userId: string;
 }) {
-  const [state, formAction, isPending] = useActionState(createLogAction, {
-    error: "",
-    success: "",
-  });
+  const [state, formAction, isPending] = useActionState<any, any>(
+    createLogAction,
+    {
+      error: "",
+      success: "",
+    }
+  );
 
   return (
     <form action={formAction} className="space-y-6">
