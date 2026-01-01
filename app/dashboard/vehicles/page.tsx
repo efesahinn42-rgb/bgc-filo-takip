@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma"; // Merkezi prisma dosyasını kullanıyoruz
-import DeleteButton from "./DeleteButton"; // Yeni buton bileşeni
+import { prisma } from "@/lib/prisma";
+import DeleteButton from "./DeleteButton";
 
-export const dynamic = "force-dynamic"; // Verilerin her zaman güncel kalmasını sağlar
+// Vercel'de verilerin anlık güncellenmesi için kritik ayar
+export const dynamic = "force-dynamic";
 
 export default async function VehiclesPage() {
+  // Veritabanından araçları çek
   const vehicles = await prisma.vehicle.findMany({
     include: {
       company: true,
@@ -57,7 +59,7 @@ export default async function VehiclesPage() {
                     Düzenle
                   </Link>
 
-                  {/* Silme işlemini yapan Client Component */}
+                  {/* Sadece araç ID'sini gönderiyoruz, fonksiyonu değil */}
                   <DeleteButton vehicleId={vehicle.id} />
                 </td>
               </tr>
